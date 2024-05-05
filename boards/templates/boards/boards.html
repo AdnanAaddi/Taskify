@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ project.name }} Boards</title>
+    <style>
+        .container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .project-info {
+            flex-grow: 1;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .add-board-button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 20px;
+        }
+        .board-cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .board-card {
+            background-color: #f0f0f0;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 200px;
+            cursor: pointer;
+        }
+        .board-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="project-info">{{ project.name }}</div>
+        <button class="add-board-button" onclick="toggleForm()">Add Board</button>
+    </div>
+    
+    <div id="boardForm" style="display: none;">
+        <form method="post">
+            {% csrf_token %}
+            <input type="text" name="board_name" placeholder="Board Name">
+            <button type="submit">Create</button>
+        </form>
+    </div>
+    
+    <div class="board-cards">
+        {% for board in boards %}
+            <a href="{% url 'lists' board.id %}" class="board-card">
+                <div class="board-title">{{ board.title }}</div>
+                <!-- Add more board details here if needed -->
+            </a>
+        {% endfor %}
+    </div>
+
+    <script>
+        function toggleForm() {
+            var form = document.getElementById("boardForm");
+            form.style.display === "none" ? form.style.display = "block" : form.style.display = "none";
+        }
+    </script>
+</body>
+</html>

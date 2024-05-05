@@ -1,0 +1,160 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>To-Do Lists</title>
+    <style>
+        .list-container {
+            display: flex;
+            overflow-x: auto;
+        }
+
+        .list {
+            margin-right: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            min-width: 220px;
+        }
+
+        .card {
+            background-color: #f2f2f2;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .card p {
+            margin: 0;
+            padding: 0;
+        }
+
+        .add-task {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+
+        .add-task button {
+            background-color: transparent;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+
+        .add-task button:focus {
+            outline: none;
+        }
+
+        .add-task button:hover {
+            text-decoration: underline;
+        }
+    </style>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/board.css' %}">
+</head>
+
+<body>
+    <div class="container">
+        <div class="list-container">
+            {% for list in lists %}
+            <div class="list" id="list-{{ list.id }}" ondragover="allowDrop(event)" ondrop="drop(event)">
+                <h2>{{ list.title }}</h2>
+                {% for card in list.cards.all %}
+                <div class="card" draggable="true" id="card-{{ card.id }}" ondragstart="drag(event)">
+                    <p>{{ card.title }}</p>
+                </div>
+                {% endfor %}
+                <div class="add-task">
+                    <a href="{% url 'add_card' list.id %}" class="new-card">Add New Card</a>
+                </div>
+            </div>
+            {% endfor %}
+            <div class="list" id="add-list">
+                <button id="show-textbox">Add Another List</button>
+                <form id="add-list-form" method="POST">
+                    {% csrf_token %}
+                    <input type="text" name="list_title" placeholder="Enter list title" style="display: none;">
+                    <button type="submit" style="display: none;">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.getElementById("show-textbox").addEventListener("click", function () {
+            // Show the text field and submit button
+            var textBox = document.querySelector("#add-list-form input[name='list_title']");
+            textBox.style.display = "inline-block";
+            var submitBtn = document.querySelector("#add-list-form button[type='submit']");
+            submitBtn.style.display = "inline-block";
+            // Hide the "Add Another List" button
+            this.style.display = "none";
+        });
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function drag(ev) {
+            console.log('Drag Event Triggered')
+            ev.dataTransfer.setData("card-id", ev.target.id);
+        }
+
+        function drop(ev) {
+            console.log('Drop Event Triggered')
+            ev.preventDefault();
+    var cardId = ev.dataTransfer.getData("card-id"); // Retrieve the card ID from dataTransfer
+    var newListId = ev.target.closest('.list').id.match(/\d+/)[0]; // Extract the ID of the target list
+    moveCard(cardId.split('-')[1], newListId, ev.target.closest('.list')); 
+        }
+
+
+       function moveCard(cardId, newListId, targetList) {
+  fetch('/move_card/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: `card_id=${cardId}&target_list_id=${newListId}`
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log(data.message);
+    // Move the card DOM element to the new list if the backend operation was successful
+    if (data.success) {
+      var cardElement = document.getElementById(`card-${cardId}`);
+      var targetListContainer = targetList.querySelector('.add-task'); // Find the container to append the card
+      targetListContainer.insertAdjacentElement('beforebegin', cardElement); // Insert the card before the 'Add New Card' button
+    }
+  })
+  .catch((error) => {
+    console.error('Error:', error);
+  });
+  return false;
+}
+        // Utility function to get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+
+</body>
+
+</html>
