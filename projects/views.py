@@ -26,7 +26,7 @@ class CreateProjectView(LoginRequiredMixin, View):
             return redirect('dashboard')  # Redirect to the dashboard after project creation
         return render(request, 'projects/create_project.html', {'form': form})
         
-
+# display projects
 def display_projects(user):
     user_projects = Project.objects.filter(owner=user)
     return user_projects
